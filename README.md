@@ -1,5 +1,6 @@
-This is a wave mesh generator using pure OpenGL. Movement is based off a sum of sin waves. 
+This is a wave mesh generator using pure OpenGL. Movement is based off a sum of sine waves. 
 Helper functions from https://learnopengl.com/ are used for shader loading, handling inputs, moving the camera etc.
+Binaries for GLFW will need to be generated and properly linked (Download the correct binaries from https://www.glfw.org/ and add to include, then link in CMakeList.txt)
 
 Future expansion is to add proper normals for realistic lighting.
 
