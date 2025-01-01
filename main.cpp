@@ -1,3 +1,6 @@
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_opengl3.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <../Shader.h>
@@ -5,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <imgui/imgui_internal.h>
 #include <STB_IMAGE/stb_image.h>
 
 #include "WaveMesh.h"
@@ -18,8 +22,8 @@ unsigned int loadTexture(char const * path);
 
 constexpr unsigned SCR_WIDTH = 800;
 constexpr unsigned SCR_HEIGHT = 600;
-auto cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
-auto cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+auto cameraPos   = glm::vec3(0.0f, 2.0f,  5.0f);
+auto cameraFront = glm::vec3(0.0f, -0.5f, -1.0f);
 auto cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -27,6 +31,7 @@ float lastFrame = 0.0f;
 float timeSinceUpdated = 0.0f;
 // camera
 bool firstMouse = true;
+bool wireFrame = true;
 float yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
 float pitch =  0.0f;
 float lastX =  800.0f / 2.0;
@@ -62,7 +67,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     //----------------------------------------------------------------
 
     // LOAD FUNCTION POINTERS ----------------------------------------
@@ -71,10 +76,17 @@ int main() {
         return -1;
     }
     //----------------------------------------------------------------
+    // IMGUI
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
 
     // SHADERS -------------------------------------------------------
     const Shader shader("../shaders/shader.vert", "../shaders/shader.frag");
-    WaveMesh wave(500, 100, &wave_equation);
+    WaveMesh wave(500, 10, &wave_equation);
 
     unsigned int texture = loadTexture("../sea.jpg"); // https://www.manytextures.com/texture/30/rough-sea/
 
@@ -96,6 +108,17 @@ int main() {
         glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        if (wireFrame) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
+
         shader.use();
         glm::mat4 projection = glm::perspective(glm::radians(fov), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
         shader.setMat4("projection", projection);
@@ -109,9 +132,26 @@ int main() {
 
         wave.draw(&shader);
 
+        ImGui::Begin("GUI Window");
+        ImGui::Text("Random Text");
+        //--------
+        ImGui::Checkbox("Wireframe Mode", &wireFrame);
+        ImGui::SliderInt("Vertices Per Side", &wave.numVertices, 10, 500);
+        if (ImGui::Button("Update Vertices")) {
+            wave.updateVertices();
+            wave.updateIndices();
+        }
+        ImGui::End();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
     return 0;
@@ -165,6 +205,11 @@ void processInput(GLFWwindow *window, WaveMesh *wave)
 
 void mouse_callback(GLFWwindow* window, double xPosIn, double yPosIn)
 {
+    if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+        firstMouse = true;
+        return;
+    }
+
     const auto xPos = static_cast<float>(xPosIn);
     const auto yPos = static_cast<float>(yPosIn);
 
@@ -180,7 +225,7 @@ void mouse_callback(GLFWwindow* window, double xPosIn, double yPosIn)
     lastX = xPos;
     lastY = yPos;
 
-    constexpr float sensitivity = 0.1f; // change this value to your liking
+    constexpr float sensitivity = 0.3f; // change this value to your liking
     xOffset *= sensitivity;
     yOffset *= sensitivity;
 

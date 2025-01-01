@@ -20,15 +20,15 @@ class WaveMesh {
 public:
     // function pointer to the wave equation we want to use.
     float (*waveEquation)(float, float);
-    unsigned int maxVertices;
-    unsigned int numVertices;
-    unsigned int numIndices;
+    int maxVertices;
+    int numVertices;
+    int numIndices;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     unsigned int VAO{}, VBO{}, EBO{};
 
 
-    WaveMesh(unsigned int maxVertices, unsigned int numVertices, float (*waveEquation)(float, float));
+    WaveMesh(int maxVertices, int numVertices, float (*waveEquation)(float, float));
 
     void updateVertices();
     void updateIndices();

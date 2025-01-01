@@ -16,13 +16,13 @@ void main()
 {
     // ambient
     float ambientStrength = 0.1;
-    vec3 ambient = ambientStrength * lightColor * texture(tex, TexCoord).rgb;
+    vec3 ambient = ambientStrength * lightColor * objectColor;//texture(tex, TexCoord).rgb;
 
     // diffuse
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(lightPos - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor * texture(tex, TexCoord).rgb;
+    vec3 diffuse = diff * lightColor * objectColor;//texture(tex, TexCoord).rgb;
 
     // specular
     vec3 viewDir = normalize(viewPos - FragPos);

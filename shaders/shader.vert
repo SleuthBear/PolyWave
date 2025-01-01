@@ -16,9 +16,9 @@ uniform float numVertices;
 void main()
 {
     vec3 newPos = aPos;
-    newPos.y = 0.05*sin(5*aPos.x + 2*time) + 0.05*sin(4*aPos.z + 1*time);
-    vec3 biNormal = vec3(1, 0, (0.05*5/numVertices)*cos(5*aPos.x/numVertices + 2*time));
-    vec3 tangent = vec3(-(0.05*4/numVertices)*sin(4*aPos.z/numVertices + 1*time), 0, 1);
+    newPos.y = 0.05*sin(5*aPos.x + 2*time) + 0.05*sin(4*aPos.z + 1*time);// + 0.005*sin(400*aPos.x + 3*time);
+    vec3 biNormal = vec3(1, 0, (0.05*5)*cos(5*aPos.x + 2*time)) ;
+    vec3 tangent = vec3(-(0.05*4)*sin(4*aPos.z + 1*time), 0, 1);
     Normal = cross(tangent, biNormal);
 
     FragPos = vec3(model * vec4(newPos, 1.0));

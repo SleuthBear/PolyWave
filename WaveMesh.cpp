@@ -9,7 +9,7 @@
 #include "Shader.h"
 #include "glad/glad.h"
 
-WaveMesh::WaveMesh(unsigned int maxVertices, unsigned int numVertices, float (*waveEquation)(float, float))
+WaveMesh::WaveMesh(int maxVertices, int numVertices, float (*waveEquation)(float, float))
 {
     // We don't want to create a new vertex vector and assign memory each time it changes, so instead we create it once
     // at the maximum possible size, and then only render part of it.
@@ -17,7 +17,7 @@ WaveMesh::WaveMesh(unsigned int maxVertices, unsigned int numVertices, float (*w
     this->numVertices = numVertices;
     this->maxVertices = maxVertices;
     vertices.resize(maxVertices*maxVertices);
-    unsigned int maxIndices = (maxVertices-1)*(maxVertices-1)*6;
+    const int maxIndices = (maxVertices-1)*(maxVertices-1)*6;
     numIndices = (numVertices-1)*(numVertices-1)*6;
     indices.resize(maxIndices);
     glGenVertexArrays(1, &VAO);
@@ -42,7 +42,7 @@ WaveMesh::WaveMesh(unsigned int maxVertices, unsigned int numVertices, float (*w
 }
 
 void WaveMesh::updateVertices() {
-    auto fNumVertices = static_cast<float>(numVertices);
+    const auto fNumVertices = static_cast<float>(numVertices);
     for (int i=0; i<numVertices; i++) {
         for (int j=0; j<numVertices; j++) {
             const auto fI = static_cast<float>(i);
