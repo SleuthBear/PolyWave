@@ -20,8 +20,6 @@ WaveMesh::WaveMesh(unsigned int maxVertices, unsigned int numVertices, float (*w
     unsigned int maxIndices = (maxVertices-1)*(maxVertices-1)*6;
     numIndices = (numVertices-1)*(numVertices-1)*6;
     indices.resize(maxIndices);
-    updateVertices();
-    updateIndices();
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -39,6 +37,8 @@ WaveMesh::WaveMesh(unsigned int maxVertices, unsigned int numVertices, float (*w
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, texCoords)));
     glEnableVertexAttribArray(2);
+    updateVertices();
+    updateIndices();
 }
 
 void WaveMesh::updateVertices() {
@@ -49,7 +49,7 @@ void WaveMesh::updateVertices() {
             const auto fJ = static_cast<float>(j);
             // positions
             vertices[(i*numVertices + j)].position.x = -2.0f + 4*fI/fNumVertices;
-            vertices[(i*numVertices + j)].position.y = waveEquation(fI/fNumVertices, fJ/fNumVertices); // static_cast<float>(0.05*std::sin(10*fI/fNumVertices + 1.5*glfwGetTime()) + 0.025*std::cos(20*fJ/fNumVertices + glfwGetTime()) + 0.05*std::cos(10*fJ/fNumVertices + glfwGetTime()));
+            vertices[(i*numVertices + j)].position.y = 0.0; // static_cast<float>(0.05*std::sin(10*fI/fNumVertices + 1.5*glfwGetTime()) + 0.025*std::cos(20*fJ/fNumVertices + glfwGetTime()) + 0.05*std::cos(10*fJ/fNumVertices + glfwGetTime()));
             vertices[(i*numVertices + j)].position.z = -2.0f + 4*fJ/fNumVertices;
             // normals
             vertices[(i*numVertices + j)].normal.x =  0.0f;
@@ -60,6 +60,7 @@ void WaveMesh::updateVertices() {
             vertices[(i*numVertices + j)].texCoords.y =  fJ/fNumVertices;
         }
     }
+    glBufferSubData(GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(numVertices * numVertices * sizeof(Vertex)), vertices.data());
 }
 
 void WaveMesh::updateIndices() {
@@ -83,7 +84,6 @@ void WaveMesh::updateIndices() {
 
 void WaveMesh::draw(const Shader *shader) const {
     glBindVertexArray(VAO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(numVertices * numVertices * sizeof(Vertex)), vertices.data());
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(numIndices), GL_UNSIGNED_INT, nullptr);
 }
 

@@ -33,7 +33,7 @@ float lastX =  800.0f / 2.0;
 float lastY =  600.0 / 2.0;
 float fov   =  45.0f;
 
-glm::vec3 lightPos(0.0f, 10.0f, 0.0f);
+glm::vec3 lightPos(0.0f, 2.0f, 3.0f);
 
 
 
@@ -74,7 +74,7 @@ int main() {
 
     // SHADERS -------------------------------------------------------
     const Shader shader("../shaders/shader.vert", "../shaders/shader.frag");
-    WaveMesh wave(1000, 10, &wave_equation);
+    WaveMesh wave(500, 100, &wave_equation);
 
     unsigned int texture = loadTexture("../sea.jpg"); // https://www.manytextures.com/texture/30/rough-sea/
 
@@ -103,8 +103,10 @@ int main() {
         shader.setMat4("view", view);
         auto model = glm::mat4(1.0f);
         shader.setMat4("model", model);
+        shader.setFloat("time", static_cast<float>(glfwGetTime()));
+        shader.setFloat("numVertices", static_cast<float>(wave.numVertices));
+        shader.setVec3("viewPos", cameraPos);
 
-        wave.updateVertices();
         wave.draw(&shader);
 
         glfwSwapBuffers(window);
@@ -140,14 +142,16 @@ void processInput(GLFWwindow *window, WaveMesh *wave)
 
     timeSinceUpdated += deltaTime;
     if (timeSinceUpdated > 0.1) {
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && wave->numVertices > 5) {
-            wave->numVertices -= 1;
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && wave->numVertices > 15) {
+            wave->numVertices -= 10;
             wave->updateIndices();
+            wave->updateVertices();
             timeSinceUpdated = 0.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && wave->numVertices < wave->maxVertices) {
-            wave->numVertices += 1;
+            wave->numVertices += 10;
             wave->updateIndices();
+            wave->updateVertices();
             timeSinceUpdated = 0.0f;
         }
     }
