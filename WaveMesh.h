@@ -28,13 +28,11 @@ public:
     unsigned int VAO{}, VBO{}, EBO{};
 
 
-    WaveMesh(int maxVertices, int numVertices, float (*waveEquation)(float, float));
+    WaveMesh(int maxVertices, int numVertices);
 
     void updateVertices();
     void updateIndices();
     void draw(const Shader *shader) const;
-    //void updateWaveEquation(float (*waveEquation)(float, float));
-    //void updateNumVertices(unsigned int numVertices);
 };
 
 

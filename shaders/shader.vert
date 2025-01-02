@@ -7,20 +7,31 @@ out vec3 FragPos;
 out vec3 Normal;
 out vec2 TexCoord;
 
+struct Wave {
+    float amplitude;
+    float timeConstant;
+    vec2 Frequency;
+    float offset;
+};
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform float time;
 uniform float numVertices;
+uniform Wave[10] waves;
+uniform int nWaves;
 
 void main()
 {
     vec3 newPos = aPos;
-    newPos.y = 0.05*sin(5*aPos.x + 2*time) + 0.05*sin(4*aPos.z + 1*time);// + 0.005*sin(400*aPos.x + 3*time);
-    vec3 biNormal = vec3(1, 0, (0.05*5)*cos(5*aPos.x + 2*time)) ;
-    vec3 tangent = vec3(-(0.05*4)*sin(4*aPos.z + 1*time), 0, 1);
-    Normal = cross(tangent, biNormal);
-
+    vec3 subNormal = vec3(0, 1, 0);
+    for (int i=0; i<nWaves; i++) {
+        newPos.y = newPos.y + waves[i].amplitude*sin(waves[i].offset + dot(aPos.xz, waves[i].Frequency) + waves[i].timeConstant * time);
+        subNormal.y = subNormal.y + 1.0;
+        subNormal.xz =  subNormal.xz - (waves[i].amplitude * waves[i].Frequency)*cos(waves[i].offset + dot(aPos.xz, waves[i].Frequency) + waves[i].timeConstant * time);
+    }
+    Normal = subNormal;
     FragPos = vec3(model * vec4(newPos, 1.0));
     TexCoord = aTexCoord;
 

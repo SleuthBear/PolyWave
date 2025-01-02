@@ -15,7 +15,7 @@ uniform sampler2D tex;
 void main()
 {
     // ambient
-    float ambientStrength = 0.1;
+    float ambientStrength = 0.5;
     vec3 ambient = ambientStrength * lightColor * objectColor;//texture(tex, TexCoord).rgb;
 
     // diffuse
@@ -27,9 +27,9 @@ void main()
     // specular
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0)*0.4;
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0)*0.5;
     vec3 specular = spec * lightColor;
 
     vec3 result = (ambient + diffuse + specular);
-    FragColor = vec4(result, 0.7);
+    FragColor = vec4(result, 1.0f);
 }

@@ -9,7 +9,7 @@
 #include "Shader.h"
 #include "glad/glad.h"
 
-WaveMesh::WaveMesh(int maxVertices, int numVertices, float (*waveEquation)(float, float))
+WaveMesh::WaveMesh(int maxVertices, int numVertices)
 {
     // We don't want to create a new vertex vector and assign memory each time it changes, so instead we create it once
     // at the maximum possible size, and then only render part of it.
