@@ -20,8 +20,8 @@ void mouse_callback(GLFWwindow* window, double xPosIn, double yPosIn);
 float wave_equation(float x, float y);
 unsigned int loadTexture(char const * path);
 
-constexpr unsigned SCR_WIDTH = 800;
-constexpr unsigned SCR_HEIGHT = 600;
+constexpr unsigned SCR_WIDTH = 1200;
+constexpr unsigned SCR_HEIGHT = 900;
 auto cameraPos   = glm::vec3(0.0f, 2.0f,  5.0f);
 auto cameraFront = glm::vec3(0.0f, -0.5f, -1.0f);
 auto cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
@@ -40,7 +40,13 @@ float fov   =  45.0f;
 
 glm::vec3 lightPos(0.0f, 2.0f, 3.0f);
 
-
+struct WaveParams {
+    float amplitude;
+    float timeConstant;
+    float xFrequency;
+    float zFrequency;
+    float offset;
+};
 
 int main() {
     //GLFW INIT BLOCK ---------------------------------------------------
@@ -79,25 +85,30 @@ int main() {
     // IMGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO(); (void)io;
+    const ImGuiIO &io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
     // SHADERS -------------------------------------------------------
     const Shader shader("../shaders/shader.vert", "../shaders/shader.frag");
-    WaveMesh wave(500, 10, &wave_equation);
-
-    unsigned int texture = loadTexture("../sea.jpg"); // https://www.manytextures.com/texture/30/rough-sea/
+    WaveMesh wave(500, 10);
+    loadTexture("../sea.jpg"); // https://www.manytextures.com/texture/30/rough-sea/
 
     shader.use();
     shader.setVec3("objectColor", 0.0f, 0.5f, 1.0f);
     shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     shader.setVec3("lightPos", lightPos);
     shader.setInt("tex", 0);
+
+    int nWaves = 0;
+    std::vector<WaveParams> waves;
+
+    glEnable(GL_DEPTH_TEST);
+
     while (!glfwWindowShouldClose(window))
     {
-        auto currentFrame = static_cast<float>(glfwGetTime());
+        const auto currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
@@ -129,8 +140,16 @@ int main() {
         shader.setFloat("time", static_cast<float>(glfwGetTime()));
         shader.setFloat("numVertices", static_cast<float>(wave.numVertices));
         shader.setVec3("viewPos", cameraPos);
+        shader.setInt("nWaves", nWaves);
+        for(int i=0; i <nWaves; i++) {
+            shader.setFloat("waves[" + std::to_string(i) + "].amplitude", waves[i].amplitude);
+            shader.setVec2("waves[" + std::to_string(i) + "].Frequency", glm::vec2(waves[i].xFrequency, waves[i].zFrequency));
+            shader.setFloat("waves[" + std::to_string(i) + "].timeConstant", waves[i].timeConstant);
+            shader.setFloat("waves[" + std::to_string(i) + "].offset", waves[i].offset);
+        }
 
         wave.draw(&shader);
+
 
         ImGui::Begin("GUI Window");
         ImGui::Text("Random Text");
@@ -140,6 +159,27 @@ int main() {
         if (ImGui::Button("Update Vertices")) {
             wave.updateVertices();
             wave.updateIndices();
+        }
+        ImGui::Text("New Wave Equation");
+        static float amplitude = 0.05f;
+        ImGui::InputFloat("Amplitude", &amplitude, 0.01f, 1.0f, "%.3f");
+        static float offset = 1.0f;
+        ImGui::InputFloat("Offset", &offset, 0.01f, 1.0f, "%.3f");
+        static float xFrequency = 5.f;
+        ImGui::InputFloat("x Frequency", &xFrequency, 0.01f, 1.0f, "%.3f");
+        static float zFrequency = 5.f;
+        ImGui::InputFloat("z Frequency", &zFrequency, 0.01f, 1.0f, "%.3f");
+        static float timeConstant = 1.0f;
+        ImGui::InputFloat("Time Constant", &timeConstant, 0.01f, 1.0f, "%.3f");
+        if (ImGui::Button("Add Wave") && nWaves < 10) {
+            waves.push_back(WaveParams(amplitude, timeConstant, xFrequency, zFrequency, offset));
+            nWaves++;
+        }
+        for(int i = 0; i<nWaves; i++) {
+            if (ImGui::Button(("Delete Wave " + std::to_string(i)).c_str())) {
+                waves.erase(waves.begin() + i);
+                nWaves--;
+            };
         }
         ImGui::End();
         ImGui::Render();
@@ -253,10 +293,9 @@ unsigned int loadTexture(char const * path)
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
-    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
-    if (data)
+    if (unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0))
     {
-        GLenum format;
+        GLenum format = 0;
         if (nrComponents == 1)
             format = GL_RED;
         else if (nrComponents == 3)
@@ -265,7 +304,7 @@ unsigned int loadTexture(char const * path)
             format = GL_RGBA;
 
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -282,8 +321,4 @@ unsigned int loadTexture(char const * path)
     }
 
     return textureID;
-}
-
-float wave_equation(float x, float y) {
-    return 0.05f*std::sinf(glfwGetTime()/0.5f + 10*x) + 0.05f*std::sin(glfwGetTime()/1.0f + 10*y);
 }
